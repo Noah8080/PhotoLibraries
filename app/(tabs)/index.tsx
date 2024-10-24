@@ -4,35 +4,13 @@ import { Image } from 'expo-image';
 import { ScreenContent } from '~/components/ScreenContent';
 import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
+import { useMedia } from '~/providers/mediaProviders';
 
 export default function Home() {
+  const {assets, loadLocalMedia} = useMedia();
+  //console.log(abc);
 
-
-  const [permissionResponse, reqestPermission] = MediaLibrary.usePermissions();
-
-  const [localMedia, setLocalMedia] = useState<MediaLibrary.Asset[]>([]);
-
-  useEffect(() => {
-    // gets permission from user to access their local media library
-    if(permissionResponse?.status != 'granted') {
-      reqestPermission();
-    }
-  }, []);
-
-  // if permission is granted, load local media
-  useEffect(() => {
-    if(permissionResponse?.status === 'granted') {
-      loadLocalMedia();
-    }
-  }, [permissionResponse]);
-
-  const loadLocalMedia = async () => {
-    const mediaPage = await MediaLibrary.getAssetsAsync();
-    console.log(JSON.stringify(mediaPage, null, 2));
-    // set local media to the assets returned from the media library
-    setLocalMedia(mediaPage.assets);
-  };
-
+  
   return (
     <>
       <Stack.Screen options={{ title: 'Photos' }} />
@@ -40,12 +18,15 @@ export default function Home() {
       <FlatList
         columnWrapperStyle={{gap: 1}} // gap between columns
         contentContainerStyle={{gap: 1}} // gap between rows
-        numColumns={4} // number of columns to display
-        data={localMedia} renderItem={({item}) => (
+        numColumns={3} // number of columns to display
+        onEndReached={loadLocalMedia} // when the end of the list is reached, load the next page of media
+        onEndReachedThreshold={1}
+        //refreshing={load}
+        data={assets} 
+        renderItem={({item}) => (
            <Image source={{uri: item.uri}} 
            style={{width: '33.3%', aspectRatio: 1 }} /> )} // width of 33.3% makes 3 columns and aspect ratio of 1 makes images square
         />
-
 
     </>
   );
