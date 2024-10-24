@@ -5,11 +5,13 @@ import { useEffect, useState } from 'react';
 type MediaContextType = {
     assets: MediaLibrary.Asset[];
     loadLocalMedia: () => void;
+    getPhotoByID: (id: string) => MediaLibrary.Asset | undefined;
 };
 
 const MediaContext = createContext<MediaContextType>({
     assets: [],
     loadLocalMedia: () => {},
+    getPhotoByID: () => undefined,
 });
 
 export default function MediaContextProvider({ children }: PropsWithChildren) {
@@ -55,8 +57,13 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     setLoading(false);
   };
 
+    {/* create function for loading photo in new page */}
+    const getPhotoByID = (id: string) => {
+      return localMedia.find((asset) => asset.id === id);
+    }
+
     return (
-        <MediaContext.Provider value={{assets: localMedia, loadLocalMedia}}>
+        <MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID}}>
             {children}
         </MediaContext.Provider>
     )
