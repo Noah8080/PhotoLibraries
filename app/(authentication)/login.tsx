@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Alert, StyleSheet, View, AppState, Image } from 'react-native'
 import { supabase } from '~/utils/supabase'
 import { Button, Input } from '@rneui/themed'
+import { useAuthentication } from '~/providers/authenticationProvider'
+import { Redirect } from 'expo-router'
 //import Logo from '~/assets/icon-logo.png'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
@@ -21,6 +23,15 @@ export default function Auth() {
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const {user} = useAuthentication();
+  // if the user is signed in, redirect them to the photos page
+  // NOTE: If added more pages consider doing this in the layout file (tabs)
+  if (user) {
+    return (
+      <Redirect href="/(tabs)" />
+    );
+  }
 
 
   // creat function for validating user's input before calling the sign up or sign in functions
