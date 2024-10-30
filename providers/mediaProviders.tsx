@@ -6,12 +6,14 @@ type MediaContextType = {
     assets: MediaLibrary.Asset[];
     loadLocalMedia: () => void;
     getPhotoByID: (id: string) => MediaLibrary.Asset | undefined;
+    uploadPhoto: (asset: MediaLibrary.Asset) => void;
 };
 
 const MediaContext = createContext<MediaContextType>({
     assets: [],
     loadLocalMedia: () => {},
     getPhotoByID: () => undefined,
+    uploadPhoto: () => {},
 });
 
 export default function MediaContextProvider({ children }: PropsWithChildren) {
@@ -62,8 +64,15 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       return localMedia.find((asset) => asset.id === id);
     }
 
+    /**
+     * create a function to upload photos to supabase
+     */
+    const uploadPhoto = (asset: MediaLibrary.Asset) => {
+      console.log('uploading photo: ', asset);
+    }
+
     return (
-        <MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID}}>
+        <MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
             {children}
         </MediaContext.Provider>
     )
