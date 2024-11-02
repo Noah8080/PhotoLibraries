@@ -34,10 +34,11 @@ export default function Auth() {
   }
 
 
-  // creat function for validating user's input before calling the sign up or sign in functions
+  // create function for validating user's input before calling the sign up or sign in functions
+  // 
   const signUpPressed = () => {
-
-    validateInput();
+    // do not need to validate for sign in button since Supabase uses stored procedures to prevent SQL injection attacks
+    validateInput(); 
 
   }
 

@@ -1,7 +1,10 @@
 import { createContext, PropsWithChildren, useContext } from "react";
 import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
-
+import * as FileSystem from 'expo-file-system';
+import { decode } from "base64-arraybuffer";
+import { supabase } from "~/utils/supabase";
+import { useAuthentication } from "./authenticationProvider";
 type MediaContextType = {
     assets: MediaLibrary.Asset[];
     loadLocalMedia: () => void;
@@ -25,6 +28,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   const [endCursor, setEndCursor] = useState<string>();
   // make sure method can't be called while it is already loading
   const [loading, setLoading] = useState(false);
+  // get user's ID from the supabase session to be able to upload photos to their account's bucket
+  const {user} = useAuthentication();
 
   useEffect(() => {
     // gets permission from user to access their local media library
@@ -67,8 +72,25 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     /**
      * create a function to upload photos to supabase
      */
-    const uploadPhoto = (asset: MediaLibrary.Asset) => {
-      console.log('uploading photo: ', asset);
+    const uploadPhoto = async (asset: MediaLibrary.Asset) => {
+      // display the current photo's data to the log
+      //console.log('uploading photo: ', asset);
+
+      const photoInfo = await MediaLibrary.getAssetInfoAsync(asset);
+
+      // if the photo is not found or the userID is not found, display a warning
+      if(!photoInfo.localUri || !user?.id) {
+        console.warn('photo not found');
+        return;
+      }
+
+      // read the photo as a base64 string...
+      const base64String = await FileSystem.readAsStringAsync(photoInfo.localUri, {encoding: 'base64'});
+      // create an array buffer from the base64 string, that will be uploaded to supabase
+      const arrayBuffer = decode(base64String);
+      // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
+      const {data, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg'});
+      console.log(data, error);
     }
 
     return (
@@ -82,3 +104,4 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 export const useMedia = () => {
    return useContext(MediaContext);
 }
+

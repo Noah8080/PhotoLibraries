@@ -18,6 +18,7 @@
     "@react-navigation/native": "^6.1.7",
     "@rneui/themed": "^4.0.0-rc.8",
     "@supabase/supabase-js": "^2.45.6",
+    "base64-arraybuffer": "^1.0.2",
     "expo": "^51.0.38",
     "expo-constants": "~16.0.1",
     "expo-image": "~1.13.0",
