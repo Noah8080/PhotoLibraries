@@ -3,6 +3,8 @@ import { Text } from "react-native";
 import { useMedia } from "~/providers/mediaProviders";
 import { Image } from 'expo-image';
 import { AntDesign } from "@expo/vector-icons";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { getImagekitUrlFromPath } from "~/utils/imagekit";
 
 
 export default function photoAssetPage(){
@@ -13,11 +15,17 @@ export default function photoAssetPage(){
     const asset = getPhotoByID(id);
 
 
+    // if there is no assets for a photo, display a message
     if(!asset){
         return (
             <Text>Photo not found</Text>
         )
     }
+
+
+    // get the image url from the imagekit, first is path of folder and image, 2nd is array of transformations
+    // (it is currently stored in const uri for testing purposes)
+    const uri = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[])
 
 
     return (
@@ -28,6 +36,10 @@ export default function photoAssetPage(){
 
             {/* display the image */}
             <Image source={{uri: asset.uri}} style={{width: '100%', height: '100%'}} contentFit="contain" />
+
+            {/* test purposes to display the image loaded from supabase through imagekit */}
+            {/* <Image source={{uri: uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> */}
+
         </>
     )
 

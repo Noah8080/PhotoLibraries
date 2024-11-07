@@ -91,6 +91,11 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
       const {data, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg'});
       console.log(data, error);
+      alert('Photo uploaded');
+
+      // TODO: SECure against potential exe files uploaded as photos
+      // look at magic bytes
+
     }
 
     return (

@@ -35,7 +35,6 @@ export default function Auth() {
 
 
   // create function for validating user's input before calling the sign up or sign in functions
-  // 
   const signUpPressed = () => {
     // do not need to validate for sign in button since Supabase uses stored procedures to prevent SQL injection attacks
     validateInput(); 
@@ -171,7 +170,7 @@ export default function Auth() {
       </View>
       {/* <Image source={Logo} style={[styles.logo, ]}  /> */}
 
-    </View>
+      </View>
   )
 }
 
