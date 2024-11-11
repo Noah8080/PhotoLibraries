@@ -35,7 +35,7 @@ export default function photoAssetPage(){
                 <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black" /> }} />
 
             {/* display the image */}
-            <Image source={{uri: asset.uri}} style={{width: '100%', height: '100%'}} contentFit="contain" />
+            <Image source={{uri: asset.uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> 
 
             {/* test purposes to display the image loaded from supabase through imagekit */}
             {/* <Image source={{uri: uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> */}

@@ -5,6 +5,7 @@ import * as FileSystem from 'expo-file-system';
 import { decode } from "base64-arraybuffer";
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "./authenticationProvider";
+import { store } from "expo-router/build/global-state/router-store";
 type MediaContextType = {
     assets: MediaLibrary.Asset[];
     loadLocalMedia: () => void;
@@ -89,9 +90,24 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       // create an array buffer from the base64 string, that will be uploaded to supabase
       const arrayBuffer = decode(base64String);
       // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
-      const {data, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg'});
-      console.log(data, error);
+      const {data: uploadedImage, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg'});
+      console.log(uploadedImage, error);
       alert('Photo uploaded');
+
+
+      // upload photo data to photoAsset table in supabase
+      // this will be used to load images in user's table but not their local device
+      if(uploadedImage) {
+        const {data, error} = await supabase.from('photoAssets').upsert({
+
+          id: asset.id,
+          path: uploadedImage?.path,
+          user_id: user.id,
+          mediaType: asset.mediaType,
+          objectID: uploadedImage?.id,  
+        });
+        console.log(data, error);
+      }
 
       // TODO: SECure against potential exe files uploaded as photos
       // look at magic bytes
