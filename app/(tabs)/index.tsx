@@ -1,19 +1,27 @@
 import { Stack, Link } from 'expo-router';
-import { StyleSheet, View, FlatList, Text, Pressable} from 'react-native';
+import { StyleSheet, View, FlatList, Text, Pressable, NativeModules} from 'react-native';
 import { Image } from 'expo-image';
 import { ScreenContent } from '~/components/ScreenContent';
 import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
 import { useMedia } from '~/providers/mediaProviders';
+import { AntDesign } from '@expo/vector-icons';
+import { Button } from '@rneui/themed';
+import { NativeModule } from 'expo';
+import * as Updates from 'expo-updates';
 
 export default function Home() {
   const {assets, loadLocalMedia} = useMedia();
-  //console.log(abc);
 
+  // Function to reload the app
+  const reload = async () => {
+    await Updates.reloadAsync(); // This triggers a reload of the app
+  };
   
   return (
     <>
       <Stack.Screen options={{ title: 'Photos' }} />
+      <Button onPress={reload}>Reload app</Button>
 
       {/* used to display the content in a list */}
       <FlatList
@@ -31,6 +39,15 @@ export default function Home() {
             <Pressable style={{width: "33.3%"}}>
               <Image source={{uri: item.uri}}  
               style={{width: '100%', aspectRatio: 1 }} /> 
+
+              {!item.isInSupa &&(
+              <AntDesign name = "cloudupload" size = {18} color = "white" style = {{position: 'absolute', top: 0, right: 5}}/>
+
+              )
+              }
+
+              
+
             </Pressable>
           </Link>
           )} // width of 33.3% makes 3 columns and aspect ratio of 1 makes images square

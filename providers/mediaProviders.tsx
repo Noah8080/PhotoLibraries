@@ -6,6 +6,7 @@ import { decode } from "base64-arraybuffer";
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "./authenticationProvider";
 import { store } from "expo-router/build/global-state/router-store";
+import photoAssetPage from "~/app/photoAsset";
 type MediaContextType = {
     assets: MediaLibrary.Asset[];
     loadLocalMedia: () => void;
@@ -47,6 +48,11 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     }
   }, [permissionResponse]);
 
+  /**
+   * loads local media from the user's device, searches for media after the end of the current page
+   * if there is more than one page of media, this method is called again and will load the next page in front of the exisiting
+   * @returns 
+   */
   const loadLocalMedia = async () => {
     if(loading || !hasNextPage) {
       return;
@@ -56,9 +62,28 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     const mediaPage = await MediaLibrary.getAssetsAsync({ after: endCursor }); // get the next page of media
     //console.log(JSON.stringify(mediaPage, null, 2));
 
+
+    // loop through photo assets table in supabase, checking for photos that are already backed up
+    // results are stored in newMedia
+    const newMedia = await Promise.all(
+      mediaPage.assets.map(async (asset) => {
+        // query supabase for photo ids that match locally stored photos
+        const {count} = await supabase.from('photoAssets').select('*', {count: 'exact', head: true}).eq('id', asset.id);
+
+        // create an array of items to be returned
+        return{
+          ...asset,
+          isInSupa: !!count && count > 0,
+        }
+      })
+    );
+
+    console.log('========================');
+    console.log(JSON.stringify(newMedia, null, 2));
+
     // set local media to the assets returned from the media library
     // if there is more than one page of media, this method is called again and will load the next page in front of the exisiting
-    setLocalMedia((existingItems) => [...existingItems, ...mediaPage.assets]);
+    setLocalMedia((existingItems) => [...existingItems, ...newMedia]);
     setHasNextPage(mediaPage.hasNextPage);
     setEndCursor(mediaPage.endCursor);
     
@@ -90,13 +115,13 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       // create an array buffer from the base64 string, that will be uploaded to supabase
       const arrayBuffer = decode(base64String);
       // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
-      const {data: uploadedImage, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg'});
+      const {data: uploadedImage, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg', upsert: true});
       console.log(uploadedImage, error);
       alert('Photo uploaded');
 
 
       // upload photo data to photoAsset table in supabase
-      // this will be used to load images in user's table but not their local device
+      // this will be used to load images that are in user's table but not their local device
       if(uploadedImage) {
         const {data, error} = await supabase.from('photoAssets').upsert({
 
@@ -105,8 +130,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
           user_id: user.id,
           mediaType: asset.mediaType,
           objectID: uploadedImage?.id,  
-        });
-        console.log(data, error);
+        }).select().single();
+        console.log('hrerererewrwerewrewrwerew',data, error);
       }
 
       // TODO: SECure against potential exe files uploaded as photos
