@@ -22,18 +22,16 @@ export default function photoAssetPage(){
         )
     }
 
-    console.log('asset: ', asset);  
+    console.log('asset: ' + asset);
     let uri;
+    // if the asset is not in supabase, display photo using local uri
     if(asset.isLocalPhoto){
         uri = asset.uri;
-        console.log('loaded from local: ', uri);
-    } 
-    if(!asset.isLocalPhoto){
-        console.log('loaded from supabase: ', asset.uri);
-        uri = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[
-            {width: 200, height: 200}
-        ]);
-
+        console.log('loaded with local uri: ' + uri);
+    }
+    else{
+        console.log('loaded with cloud uri: ' + uri);
+        uri = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[])
     }
 
     // get the image url from the imagekit, first is path of folder and image, 2nd is array of transformations
@@ -48,7 +46,7 @@ export default function photoAssetPage(){
                 <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black" /> }} />
 
             {/* display the image */}
-            <Image source={{uri: uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> 
+            <Image source={{uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> 
 
             {/* test purposes to display the image loaded from supabase through imagekit */}
             {/* <Image source={{uri: uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> */}

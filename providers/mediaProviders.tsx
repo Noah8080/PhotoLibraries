@@ -32,14 +32,13 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(false);
   // get user's ID from the supabase session to be able to upload photos to their account's bucket
   const {user} = useAuthentication();
-  // store data of images stored in the user's table in supabase but not their local device
-  const [cloudMedia, setcloudMedia] = useState([]);
 
-  // combine local and cloud media into one array. filter out images that are already stored in the cloud
-  const assets = [...cloudMedia, ...localMedia.filter((media) => !media.isInSupa)];
-  const media1 = [...cloudMedia];
-  
+  // get data of photo's stored in supabase
+  const [cloudMedia, setCloudPhotos] = useState([]);
+  // make an array of all media. Filter out the media that is both local and cloud to be loaded with the cloud media
+  const media = [...cloudMedia, ...localMedia.filter((asset) => !asset.isInSupa)];
 
+  useEffect(() => {loadCloudPhotos()}, []);
 
 
   useEffect(() => {
@@ -58,19 +57,14 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   }, [permissionResponse]);
 
 
+  // load the photos that are stored in supabase
+  const loadCloudPhotos = async () => {
+    const {data, error} = await supabase.from('photoAssets').select('*');
+    if(data) {
+      setCloudPhotos(data);
+    }
+  };
 
-    // load the photos in the cloud when the application is loaded
-    useEffect(() => {
-      loadcloudMedia();
-    }, []);
-
-    const loadcloudMedia = async () => {
-      const {data, error} = await supabase.from('photoAssets').select('*'); 
-      setcloudMedia(data);
-      console.log('Cloud Media:', data, error);
-
-    };
-  
 
   /**
    * loads local media from the user's device, searches for media after the end of the current page
@@ -92,13 +86,13 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     const newMedia = await Promise.all(
       mediaPage.assets.map(async (asset) => {
         // query supabase for photo ids that match locally stored photos
-        const {count} = await supabase.from('photoAssets').select('*', {count: 'exact', head: true}).eq('id', asset.id);
+        const {count} = await supabase.from('photoAssets').select('*', {count: 'exact', head: true});
 
         // create an array of items to be returned
         return{
           ...asset,
           isInSupa: !!count && count > 0,
-          isLocalPhoto : true,
+          isLocalPhoto: true,
         }
       })
     );
@@ -144,8 +138,6 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       console.log(uploadedImage, error);
       alert('Photo uploaded');
 
-      
-
 
       // upload photo data to photoAsset table in supabase
       // this will be used to load images that are in user's table but not their local device
@@ -158,7 +150,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
           mediaType: asset.mediaType,
           objectID: uploadedImage?.id,  
         }).select().single();
-        console.log('Here is the PhotoAssets being uploaded',data, error);
+        console.log('hrerererewrwerewrewrwerew',data, error);
       }
 
       // TODO: SECure against potential exe files uploaded as photos
@@ -168,9 +160,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 
     return (
         //<MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
-        <MediaContext.Provider value={{assets, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+        <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto}}>
 
-          
             {children}
         </MediaContext.Provider>
     )
@@ -180,4 +171,3 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 export const useMedia = () => {
    return useContext(MediaContext);
 }
-

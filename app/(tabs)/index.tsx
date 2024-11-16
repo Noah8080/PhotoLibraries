@@ -9,6 +9,8 @@ import { AntDesign } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
 import { NativeModule } from 'expo';
 import * as Updates from 'expo-updates';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { getImagekitUrlFromPath } from '~/utils/imagekit';
 
 export default function Home() {
   const {assets, loadLocalMedia} = useMedia();
@@ -37,10 +39,11 @@ export default function Home() {
           <Link href={`/photoAsset?id=${item.id}`} asChild>
             {/* Pressable is used to make the image clickable */}
             <Pressable style={{width: "33.3%"}}>
-              <Image source={{uri: item.uri}}  
+              
+              <Image source={{uri: item.isLocalPhoto ? item.uri : getImagekitUrlFromPath(item.path, [])}}
               style={{width: '100%', aspectRatio: 1 }} /> 
 
-              {!item.isInSupa &&(
+              {!item.isInSupa && item.isLocalPhoto &&(
               <AntDesign name = "cloudupload" size = {18} color = "white" style = {{position: 'absolute', top: 0, right: 5}}/>
 
               )
@@ -56,5 +59,3 @@ export default function Home() {
     </>
   );
 }
-
-
