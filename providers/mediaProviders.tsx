@@ -32,6 +32,15 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(false);
   // get user's ID from the supabase session to be able to upload photos to their account's bucket
   const {user} = useAuthentication();
+  // store data of images stored in the user's table in supabase but not their local device
+  const [cloudMedia, setcloudMedia] = useState([]);
+
+  // combine local and cloud media into one array. filter out images that are already stored in the cloud
+  const assets = [...cloudMedia, ...localMedia.filter((media) => !media.isInSupa)];
+  const media1 = [...cloudMedia];
+  
+
+
 
   useEffect(() => {
     // gets permission from user to access their local media library
@@ -47,6 +56,21 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       loadLocalMedia();
     }
   }, [permissionResponse]);
+
+
+
+    // load the photos in the cloud when the application is loaded
+    useEffect(() => {
+      loadcloudMedia();
+    }, []);
+
+    const loadcloudMedia = async () => {
+      const {data, error} = await supabase.from('photoAssets').select('*'); 
+      setcloudMedia(data);
+      console.log('Cloud Media:', data, error);
+
+    };
+  
 
   /**
    * loads local media from the user's device, searches for media after the end of the current page
@@ -74,6 +98,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
         return{
           ...asset,
           isInSupa: !!count && count > 0,
+          isLocalPhoto : true,
         }
       })
     );
@@ -119,6 +144,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       console.log(uploadedImage, error);
       alert('Photo uploaded');
 
+      
+
 
       // upload photo data to photoAsset table in supabase
       // this will be used to load images that are in user's table but not their local device
@@ -131,7 +158,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
           mediaType: asset.mediaType,
           objectID: uploadedImage?.id,  
         }).select().single();
-        console.log('hrerererewrwerewrewrwerew',data, error);
+        console.log('Here is the PhotoAssets being uploaded',data, error);
       }
 
       // TODO: SECure against potential exe files uploaded as photos
@@ -140,7 +167,10 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     }
 
     return (
-        <MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+        //<MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+        <MediaContext.Provider value={{assets, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+
+          
             {children}
         </MediaContext.Provider>
     )
