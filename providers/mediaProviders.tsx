@@ -33,11 +33,21 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   // get user's ID from the supabase session to be able to upload photos to their account's bucket
   const {user} = useAuthentication();
 
+  // get data of photo's stored in supabase
+  const [cloudMedia, setCloudPhotos] = useState([]);
+  // make an array of all media. Filter out the media that is both local and cloud to be loaded with the cloud media
+  const media = [...cloudMedia, ...localMedia.filter((asset) => !asset.isInSupa)];
+  const media1 = [...cloudMedia, ...localMedia];
+
+  useEffect(() => {loadCloudPhotos()}, []);
+
+
   useEffect(() => {
     // gets permission from user to access their local media library
     if(permissionResponse?.status != 'granted') {
         
         reqestPermission();
+
     }
   }, []);
 
@@ -47,6 +57,16 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       loadLocalMedia();
     }
   }, [permissionResponse]);
+
+
+  // load the photos that are stored in supabase
+  const loadCloudPhotos = async () => {
+    const {data, error} = await supabase.from('photoAssets').select('*');
+    if(data) {
+      setCloudPhotos(data);
+    }
+  };
+
 
   /**
    * loads local media from the user's device, searches for media after the end of the current page
@@ -74,6 +94,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
         return{
           ...asset,
           isInSupa: !!count && count > 0,
+          isLocalPhoto: true,
         }
       })
     );
@@ -92,7 +113,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 
     {/* create function for loading photo in new page */}
     const getPhotoByID = (id: string) => {
-      return localMedia.find((asset) => asset.id === id);
+      // this had to be changed from localMedia to media to include cloud photos
+      return media1.find((asset) => asset.id === id);
     }
 
     /**
@@ -116,7 +138,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       const arrayBuffer = decode(base64String);
       // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
       const {data: uploadedImage, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg', upsert: true});
-      console.log(uploadedImage, error);
+      console.log('Photo uploaded to bucket: ',uploadedImage, error);
       alert('Photo uploaded');
 
 
@@ -131,7 +153,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
           mediaType: asset.mediaType,
           objectID: uploadedImage?.id,  
         }).select().single();
-        console.log('hrerererewrwerewrewrwerew',data, error);
+        console.log('Photo assets uploaded to supabase',data, error);
       }
 
       // TODO: SECure against potential exe files uploaded as photos
@@ -140,7 +162,9 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     }
 
     return (
-        <MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+        //<MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+        <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+
             {children}
         </MediaContext.Provider>
     )
@@ -150,4 +174,3 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 export const useMedia = () => {
    return useContext(MediaContext);
 }
-
