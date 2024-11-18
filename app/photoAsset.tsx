@@ -31,11 +31,11 @@ export default function photoAssetPage(){
     }
     else{
         console.log('loaded with cloud uri: ' + uri);
-        uri = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[])
+        uri = getImagekitUrlFromPath(asset.path,[])
     }
 
-    // get the image url from the imagekit, first is path of folder and image, 2nd is array of transformations
-    // (it is currently stored in const uri for testing purposes)
+    // get the image url from the imagekit(currently hard coded for testing), first is path of folder and image, 2nd is array of transformations
+    // (it is currently stored in const uri1 for testing purposes)
     const uri1 = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[])
 
 
