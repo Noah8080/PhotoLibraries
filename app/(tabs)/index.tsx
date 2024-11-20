@@ -44,9 +44,7 @@ export default function Home() {
               style={{width: '100%', aspectRatio: 1 }} /> 
 
               {!item.isInSupa && item.isLocalPhoto &&(
-              <AntDesign name = "cloudupload" size = {18} color = "white" style = {{position: 'absolute', top: 0, right: 5}}/>
-
-              )
+                <AntDesign name = "cloudupload" size = {18} color = "white" style = {{position: 'absolute', top: 0, right: 5}}/>)
               }
 
               

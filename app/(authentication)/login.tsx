@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { Alert, StyleSheet, View, AppState, Image } from 'react-native'
 import { supabase } from '~/utils/supabase'
 import { Button, Input } from '@rneui/themed'
+import * as Updates from 'expo-updates';
 import { useAuthentication } from '~/providers/authenticationProvider'
 import { Redirect } from 'expo-router'
-//import Logo from '~/assets/icon-logo.png'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -21,7 +21,6 @@ AppState.addEventListener('change', (state) => {
 export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
 
   const {user} = useAuthentication();
@@ -109,6 +108,10 @@ export default function Auth() {
 
     if (error) Alert.alert(error.message)
     setLoading(false)
+
+    // reload app after signing in to reset displayed image assets 
+    await Updates.reloadAsync(); // This triggers a reload of the app
+
   }
 
   /**
@@ -131,6 +134,10 @@ export default function Auth() {
     if (error) Alert.alert(error.message)
     if (!session) Alert.alert('Please check your inbox for email verification!')
     setLoading(false)
+
+    // reload app after signing up to reset displayed image assets 
+    await Updates.reloadAsync(); // This triggers a reload of the app
+
   }
 
   // TODO: change tyling and formatting to match that of other started project

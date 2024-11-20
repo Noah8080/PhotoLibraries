@@ -24,14 +24,15 @@ export default function photoAssetPage(){
 
     console.log('asset: ' + asset);
     let uri;
+    
     // if the asset is not in supabase, display photo using local uri
     if(asset.isLocalPhoto){
         uri = asset.uri;
         console.log('loaded with local uri: ' + uri);
     }
     else{
-        console.log('loaded with cloud uri: ' + uri);
         uri = getImagekitUrlFromPath(asset.path,[])
+        console.log('loaded with cloud uri: ' + uri);
     }
 
     // get the image url from the imagekit(currently hard coded for testing), first is path of folder and image, 2nd is array of transformations

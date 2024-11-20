@@ -78,9 +78,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       return;
     }
     setLoading(true);
-    console.log('loading local media');
+    //console.log('attempting to loading local media');
     const mediaPage = await MediaLibrary.getAssetsAsync({ after: endCursor }); // get the next page of media
-    //console.log(JSON.stringify(mediaPage, null, 2));
 
 
     // loop through photo assets table in supabase, checking for photos that are already backed up
@@ -99,8 +98,9 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       })
     );
 
-    console.log('========================');
-    console.log(JSON.stringify(newMedia, null, 2));
+    // display the new media to the log
+    //console.log('========================');
+    //console.log(JSON.stringify(newMedia, null, 2));
 
     // set local media to the assets returned from the media library
     // if there is more than one page of media, this method is called again and will load the next page in front of the exisiting
