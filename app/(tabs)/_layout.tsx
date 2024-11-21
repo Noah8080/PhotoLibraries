@@ -35,16 +35,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="shareMyFolder"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
-        <Tabs.Screen
-        name="two2"
-        options={{
-          title: 'Tab Two2',
+          title: 'Share Photos',
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
         }}
       />

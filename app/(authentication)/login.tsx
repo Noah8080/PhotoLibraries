@@ -148,7 +148,7 @@ export default function Auth() {
         <Input style={styles.imBorders}
           label="Email"
           leftIcon={{ type: 'font-awesome', name: 'envelope' }}
-          onChangeText={(text) => setEmail(text)}
+          onChangeText={(text) => setEmail(text.toLowerCase())}
           value={email}
           placeholder="email@address.com"
           autoCapitalize={'none'}

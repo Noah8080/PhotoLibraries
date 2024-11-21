@@ -22,7 +22,7 @@ export default function Home() {
   
   return (
     <>
-      <Stack.Screen options={{ title: 'Photos' }} />
+      <Stack.Screen options={{ title: 'Your Photos' }} />
       <Button onPress={reload}>Refresh</Button>
 
       {/* used to display the content in a list */}
