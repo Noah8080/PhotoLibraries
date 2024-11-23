@@ -110,7 +110,8 @@ export default function Auth() {
     setLoading(false)
 
     // reload app after signing in to reset displayed image assets 
-    await Updates.reloadAsync(); // This triggers a reload of the app
+    if(!error){
+    await Updates.reloadAsync();} // This triggers a reload of the app
 
   }
 
@@ -130,6 +131,9 @@ export default function Auth() {
       password: password,
       
     })
+    if(!error){
+      addpublicEmail();
+    }
 
     if (error) Alert.alert(error.message)
     if (!session) Alert.alert('Please check your inbox for email verification!')
@@ -139,6 +143,20 @@ export default function Auth() {
     await Updates.reloadAsync(); // This triggers a reload of the app
 
   }
+
+  // add the user's email to the public email table to
+  // make a list of emails that can be queried for sharing folders
+  const addpublicEmail = async () => {
+    try{
+      const {data, error} = await supabase.from('userEmails').insert({
+        email: email});
+      console.log('Record added to userEmails table', data, error);
+
+    }
+    catch (error) {
+      console.log('Error adding email to public emails table: ', error);
+    }
+  };
 
   // TODO: change tyling and formatting to match that of other started project
   return (

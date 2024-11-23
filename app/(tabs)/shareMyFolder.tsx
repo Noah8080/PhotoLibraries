@@ -26,23 +26,62 @@ export default function Home() {
     console.error('User is not defined');
     return;
   }
+  // store list of user's the folder has been shared with
+  const [sharedUserEmails, setSharedUsersEmails] = useState<string[]>([]);
 
-  function shareFolder() {
-    console.log('Folder shared with: ' + email);
+  // function called on component mount to get the users that the folder has been shared with
+  useEffect(() => {
+    getSharedUsers();
+  }, []); // TODO: add array of users to the dependency array to get auto updates
+
+  // get the users that the folder has been shared with
+  const getSharedUsers = async () => {
+    try{
+      
+      const {data, error} = await supabase.from('connections').select('*').eq('user_id', user.id);
+      console.log('Data from connections table', data, error);
+
+      // Extract emails from the data and update state
+      if (data) {
+        const emails = data.map((user) => user.receiverEmail); 
+        setSharedUsersEmails(emails);
+        console.log('already shared emails: ', emails);
+
+      }
+
+    }
+    catch (error) {
+      console.log('Error getting shared users: ', error);
+    }
+
+  };
+
+  // function called onPress of the share folder button
+  async function shareFolder() {
+    console.log('Attempting to share folder with: ' + email);
 
     // boolean value for checking user's input
     let validInput = false;
     validInput = validateInput();
     console.log('Valid input: ' + validInput);
 
-    if (validInput){
+    // boolean value for checking if the user has already shared the folder with the entered emai
+    let isRepeat = false;
+    isRepeat = await checkRepeatEmail();
+
+    // boolean vlaue for checking if the entered email is an account that exists in the database
+    let isAccount = false;
+    isAccount = await checkAccount();
+
+    // if the user's input is valid and the folder has not already been shared with the entered email, add a record to the connections table
+    if (validInput && !isRepeat && isAccount) {
       addRecord();
-      alert('Folder shared with: ' + email);
+      alert('Folder successfully shared with: ' + email);
+
+      setEmail(''); //clears the email input after sharing
+
     }
 
-
-
-    setEmail(''); //clears the email input after sharing
 
   }
 
@@ -70,15 +109,83 @@ export default function Home() {
 
   }
 
+  // check supabase connections table to see if the user has already shared the folder with the entered email
+  const checkRepeatEmail = async () => {
 
+    try{
+      const {data, error} = await supabase.from('connections').select('*').eq('receiverEmail', email).eq('user_id', user.id);
+      
+      if (data && data.length > 0) {
+        console.log('Folder already shared with: ' + email);
+        alert('Folder already shared with: ' + email);
+        return true;
+      }
+      else {
+        console.log('Folder not already shared with: ' + email);
+        return false;
+      }
+    }
+    catch (error) {
+      console.log('Error checking connections table: ', error);
+      return false;
+    }
+  };
+
+  // check supabase users table to see if the entered email is an account that exists in the database
+  const checkAccount = async () => {
+  
+    // query the userEmails table in supabase to see if the entered email is an account that exists in the database 
+    try{
+      const {data, error} = await supabase.from('userEmails').select('*').eq('email', email);
+      
+      if (data && data.length > 0) {
+        console.log('Account exists with email: ' + email);
+        return true;
+      }
+      else {
+        console.log('Account does not exist with email: ' + email);
+        alert('Account does not exist with email: ' + email);
+        return false;
+      }
+    }
+    catch (error) {
+      console.log('Error checking users table: ', error);
+      return false
+    }
+
+  };
+
+
+
+  // add a record to the connections table in supabase
   const addRecord = async () => {
 
-    const {data, error} = await supabase.from('connections').insert({
-      receiverEmail: email,
-      user_id: user.id,
-    })
-    console.log('Record added to connections table', data, error);
+    try{
+      const {data, error} = await supabase.from('connections').insert({
+        receiverEmail: email,
+        user_id: user.id,
+      })
+      console.log('Record added to connections table', data, error);
+    }
+    catch (error) {
+      console.log('Error adding record to connections table: ', error);
+    }
 
+  };
+
+  const deleteRecord = async () => {
+    try{
+      const {data, error} = await supabase.from('connections').delete().eq('receiverEmail', email).eq('user_id', user.id);
+      if(data){
+        alert('Folder successfully unshared with: ' + email);
+        console.log('Record deleted from connections table', data, error);
+        setEmail(''); //clears the email input after unsharing
+      }
+    }
+    catch (error) {
+      console.log('Error deleting record from connections table: ', error);
+      alert('Error unsharing folder with: ' + email);
+    }
   };
   
 
@@ -92,6 +199,15 @@ export default function Home() {
             leftIcon={{ type: 'font-awesome', name: 'envelope' }} 
             onChangeText={(text) => setEmail(text.toLowerCase())}/>
         <Button title="Share" onPress={shareFolder}/>
+        <Text style={styles.listHeading}>List of emails your folder is shared with: </Text>
+        <FlatList
+          data={sharedUserEmails}
+          renderItem={({item}) => <Text  style={styles.emailList}>{item}</Text>}
+          keyExtractor={(item) => item}>
+
+        </FlatList>
+        <Button title="Delete recepient" onPress={deleteRecord} />
+
       </View>
     </>
   );
@@ -119,6 +235,16 @@ const styles = StyleSheet.create({
   header2: {
     paddingLeft: 9,
     fontSize: 14,
+  },
+  listHeading: {
+    paddingTop: 5,
+    paddingBottom: 5,
+    fontSize: 16,
+  },
+  emailList: {
+    paddingTop: 5,
+    fontSize: 17,
+    color: 'darkgreen',
   },
 
 

@@ -35,10 +35,6 @@ export default function photoAssetPage(){
         console.log('loaded with cloud uri: ' + uri);
     }
 
-    // get the image url from the imagekit(currently hard coded for testing), first is path of folder and image, 2nd is array of transformations
-    // (it is currently stored in const uri1 for testing purposes)
-    const uri1 = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[])
-
 
     return (
         <>
@@ -49,8 +45,6 @@ export default function photoAssetPage(){
             {/* display the image */}
             <Image source={{uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> 
 
-            {/* test purposes to display the image loaded from supabase through imagekit */}
-            {/* <Image source={{uri: uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> */}
 
         </>
     )
