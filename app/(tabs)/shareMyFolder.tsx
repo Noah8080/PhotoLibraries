@@ -43,7 +43,7 @@ export default function Home() {
 
       // Extract emails from the data and update state
       if (data) {
-        const emails = data.map((user) => user.receiverEmail); 
+        const emails = data.map((user) => user.receiver_email); 
         setSharedUsersEmails(emails);
         console.log('already shared emails: ', emails);
 
@@ -113,7 +113,7 @@ export default function Home() {
   const checkRepeatEmail = async () => {
 
     try{
-      const {data, error} = await supabase.from('connections').select('*').eq('receiverEmail', email).eq('user_id', user.id);
+      const {data, error} = await supabase.from('connections').select('*').eq('receiver_email', email).eq('user_id', user.id);
       
       if (data && data.length > 0) {
         console.log('Folder already shared with: ' + email);
@@ -162,8 +162,9 @@ export default function Home() {
 
     try{
       const {data, error} = await supabase.from('connections').insert({
-        receiverEmail: email,
+        receiver_email: email,
         user_id: user.id,
+        sender_email: user.email,
       })
       console.log('Record added to connections table', data, error);
     }
@@ -175,7 +176,7 @@ export default function Home() {
 
   const deleteRecord = async () => {
     try{
-      const {data, error} = await supabase.from('connections').delete().eq('receiverEmail', email).eq('user_id', user.id);
+      const {data, error} = await supabase.from('connections').delete().eq('receiver_email', email).eq('user_id', user.id);
       if(data){
         alert('Folder successfully unshared with: ' + email);
         console.log('Record deleted from connections table', data, error);

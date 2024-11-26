@@ -40,7 +40,13 @@ export default function photoAssetPage(){
         <>
             {/* add a button at the top corner of each image page */}
             <Stack.Screen options={{ title: 'Photo', headerRight: () => 
-                <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black" /> }} />
+                <>
+                    <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black" />
+                    {/* add functionality to the delete button */}
+                    <AntDesign onPress={() => uploadPhoto(asset)} name="delete" size={20} color="red" />
+                </>
+
+            }}/>
 
             {/* display the image */}
             <Image source={{uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> 
