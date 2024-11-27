@@ -7,6 +7,7 @@ import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "./authenticationProvider";
 import { store } from "expo-router/build/global-state/router-store";
 import photoAssetPage from "~/app/photoAsset";
+
 type MediaContextType = {
     assets: MediaLibrary.Asset[];
     loadLocalMedia: () => void;

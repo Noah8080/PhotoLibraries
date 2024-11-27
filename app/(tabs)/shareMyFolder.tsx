@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: 'lightpink',
+    backgroundColor: 'orange',
   },
   header: {
     textAlign: 'center',
