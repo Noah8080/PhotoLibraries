@@ -38,7 +38,6 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   const [cloudMedia, setCloudPhotos] = useState([]);
   // make an array of all media. Filter out the media that is both local and cloud to be loaded with the cloud media
   const media = [...cloudMedia, ...localMedia.filter((asset) => !asset.isInSupa)];
-  const media1 = [...cloudMedia, ...localMedia];
 
   useEffect(() => {loadCloudPhotos()}, []);
 
@@ -115,7 +114,7 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     {/* create function for loading photo in new page */}
     const getPhotoByID = (id: string) => {
       // this had to be changed from localMedia to media to include cloud photos
-      return media1.find((asset) => asset.id === id);
+      return media.find((asset) => asset.id === id);
     }
 
     /**
@@ -163,7 +162,6 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     }
 
     return (
-        //<MediaContext.Provider value={{assets: localMedia, loadLocalMedia, getPhotoByID, uploadPhoto}}>
         <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto}}>
 
             {children}
@@ -173,5 +171,5 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 
 
 export const useMedia = () => {
-   return useContext(MediaContext);
+  return useContext(MediaContext);
 }
