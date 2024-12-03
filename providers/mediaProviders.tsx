@@ -39,7 +39,8 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   // make an array of all media. Filter out the media that is both local and cloud to be loaded with the cloud media
   const media = [...cloudMedia, ...localMedia.filter((asset) => !asset.isInSupa)];
 
-  useEffect(() => {loadCloudPhotos()}, []);
+  const userID = user?.id;
+  useEffect(() => {loadCloudPhotos(userID)}, []);
 
 
   useEffect(() => {
@@ -59,11 +60,21 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   }, [permissionResponse]);
 
 
-  // load the photos that are stored in supabase
-  const loadCloudPhotos = async () => {
-    const {data, error} = await supabase.from('photoAssets').select('*');
-    if(data) {
-      setCloudPhotos(data);
+  // load the photos that are stored in supabase.
+  const loadCloudPhotos = async (userID: string | undefined) => {
+    console.log('load cloud photos called');
+    try{
+      const {data, error} = await supabase.from('photoAssets').select('*').eq('user_id', userID);
+      if(data) {
+        console.log('cloud photos loaded in index', data);
+        setCloudPhotos(data);
+      }
+      if(!data) {
+        console.log('no cloud photos found'); 
+      }
+    }
+    catch (error) {
+      console.log('Error loading cloud photos', error); 
     }
   };
 

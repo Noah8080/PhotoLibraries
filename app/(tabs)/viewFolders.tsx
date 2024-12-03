@@ -31,6 +31,7 @@ export default function Home() {
   const [receivedUserEmails, setReceivedUsersEmails] = useState<string[]>([]);
   // store list of ID of the users that have shared their folder with the current user
   const [receivedIDs, setReceivedIDs] = useState<string[]>([]);
+  const [senderID, setSenderID] = useState<string>('');
 
   // function called on component mount to get the users that the folder has been shared with
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function Home() {
     getID(item);
     // TODO: load media from the bucket with the title of the sender's user ID
 
+
   };
 
   /**
@@ -83,15 +85,18 @@ export default function Home() {
 
       // Extract emails from the data and update state
       if (data) {
-          const senderID = data.map((user) => user.user_id); 
-          setReceivedIDs(senderID);
-          console.log('sender id of: ', senderID);
-          return senderID;
+        const senderID = data.map((user) => user.user_id); 
+        setReceivedIDs(senderID);
+        console.log('sender id of: ', senderID);
+        setSenderID(senderID[0]);
+        loadCloudPhotos(senderID[0]);
+
+        console.log('sender id2 of: ', senderID[0]);
       }
 
     }
     catch (error) {
-        console.log('Error getting shared users: ', error);
+      console.log('Error getting shared users: ', error);
     }
   };
 
@@ -99,19 +104,22 @@ export default function Home() {
   // State to store the cloud photos
   const [cloudMedia, setCloudPhotos] = useState<any[]>([]);
 
-  useEffect(() => {
-    // Load cloud photos from Supabase on mount
-    const loadCloudPhotos = async () => {
-      const { data, error } = await supabase.from('photoAssets').select('*');
+  const loadCloudPhotos = async (senderID: string) => {
+    console.log('loading cloud photos', senderID);
+    try{
+      const { data, error } = await supabase.from('photoAssets').select('*').eq('user_id', senderID);
       if (data) {
         setCloudPhotos(data);
       }
       if (error) {
         console.error("Error loading cloud photos:", error);
       }
-    };
-    loadCloudPhotos();
-  }, []);
+    }
+    catch (error) {
+      console.log('Error getting cloud photos: ', error);
+    }
+  };
+
 
   return (
     <>
