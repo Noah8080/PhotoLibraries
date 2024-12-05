@@ -110,6 +110,7 @@ export default function Home() {
       const { data, error } = await supabase.from('photoAssets').select('*').eq('user_id', senderID);
       if (data) {
         setCloudPhotos(data);
+        console.log('Cloud photos loaded:', cloudMedia);
       }
       if (error) {
         console.error("Error loading cloud photos:", error);
@@ -123,6 +124,7 @@ export default function Home() {
 
   return (
     <>
+
       <Stack.Screen options={{ title: 'View Folders' }} />
       <View style={styles.container}>
         <Text style={styles.header}>You have access to these users folders</Text>
@@ -143,9 +145,9 @@ export default function Home() {
           columnWrapperStyle={styles.columnWrapper} // Add space between columns
           contentContainerStyle={styles.contentContainer} // Add space between rows
           renderItem={({ item }) => (
-              <Link href={`/photoAsset?id=${item.id}`} asChild>
+              <Link href={`/photoAsset?id=${item.path}`} asChild>
                 {/* Pressable is used to make the image clickable */}
-                <Pressable style={{width: "33.3%"}}>
+                <Pressable style={{width: "33.3%"}} onPress={() => console.log('here: ',item)}>
                   
                   <Image source={{uri: item.isLocalPhoto ? item.uri : getImagekitUrlFromPath(item.path, [])}}
                   style={{width: '100%', aspectRatio: 1 }} /> 

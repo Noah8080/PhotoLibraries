@@ -35,12 +35,16 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   const {user} = useAuthentication();
 
   // get data of photo's stored in supabase
-  const [cloudMedia, setCloudPhotos] = useState([]);
+  const [cloudMedia, setCloudPhotos] = useState<MediaLibrary.Asset[]>([]);
   // make an array of all media. Filter out the media that is both local and cloud to be loaded with the cloud media
   const media = [...cloudMedia, ...localMedia.filter((asset) => !asset.isInSupa)];
 
   const userID = user?.id;
-  useEffect(() => {loadCloudPhotos(userID)}, []);
+  useEffect(() => {
+    if(userID){
+      loadCloudPhotos(userID)
+    }
+  }, [userID]);
 
 
   useEffect(() => {
@@ -125,11 +129,15 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     {/* create function for loading photo in new page */}
     const getPhotoByID = (id: string) => {
       // this had to be changed from localMedia to media to include cloud photos
+      let hold = media.find((asset) => asset.id === id);
+
+      console.log('getPhotoByID: ', id);
+      console.log('got PhotoByID:', hold);
       return media.find((asset) => asset.id === id);
     }
 
     /**
-     * create a function to upload photos to supabase
+     * create a function to upload photos to supabase'
      */
     const uploadPhoto = async (asset: MediaLibrary.Asset) => {
       // display the current photo's data to the log
