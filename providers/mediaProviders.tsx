@@ -5,6 +5,7 @@ import * as FileSystem from 'expo-file-system';
 import { decode } from "base64-arraybuffer";
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "./authenticationProvider";
+import * as Updates from 'expo-updates';
 import { store } from "expo-router/build/global-state/router-store";
 import photoAssetPage from "~/app/photoAsset";
 
@@ -13,6 +14,7 @@ type MediaContextType = {
     loadLocalMedia: () => void;
     getPhotoByID: (id: string) => MediaLibrary.Asset | undefined;
     uploadPhoto: (asset: MediaLibrary.Asset) => void;
+    deletePhoto: (asset: MediaLibrary.Asset) => void;
 };
 
 const MediaContext = createContext<MediaContextType>({
@@ -20,7 +22,9 @@ const MediaContext = createContext<MediaContextType>({
     loadLocalMedia: () => {},
     getPhotoByID: () => undefined,
     uploadPhoto: () => {},
+    deletePhoto: () => {},
 });
+
 
 export default function MediaContextProvider({ children }: PropsWithChildren) {
     
@@ -45,6 +49,11 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       loadCloudPhotos(userID)
     }
   }, [userID]);
+
+    // Function to reload the app
+    const reload = async () => {
+      await Updates.reloadAsync(); // This triggers a reload of the app
+    };
 
 
   useEffect(() => {
@@ -180,8 +189,56 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
 
     }
 
+    const deletePhoto = async (asset: MediaLibrary.Asset) => {
+
+      // delete photo from supabase storage
+      if (!user) {
+        console.warn('User not found');
+        return;
+      }
+
+      try{
+        // delete photo from photoAssets table in supabase
+        const {data: deletedPhoto, error: deleteError} = await supabase.from('photoAssets').delete().eq('id', asset.id);
+        console.log('Photo assets deleted from supabase', deletedPhoto, deleteError);
+
+
+        // get the path of the photo to be deleted
+        const extractedData = extractAssetData(asset);
+        // delete photo from supabase storage bucket
+        const {data: deletedImage, error: deleteImageError} = await supabase.storage.from('photos').remove([extractedData.path]);
+        console.log('Photo deleted from bucket', deletedImage, deleteImageError);
+
+        alert('Photo deleted');
+
+      }
+      catch (error) {
+        console.log('Error deleting photo: ', error);
+      }
+
+
+    };
+
+    /**
+     * extract the data from the asset to be used in the deletePhoto method 
+     * @param asset
+     * @returns
+     */
+    function extractAssetData(asset: MediaLibrary.Asset) {
+      const {
+        created_at,
+        id,
+        mediaType,
+        objectID,
+        path,
+        user_id,
+      } = asset;
+      return { created_at, id, mediaType, objectID, path, user_id };
+    }
+    
+
     return (
-        <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto}}>
+        <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto, deletePhoto}}>
 
             {children}
         </MediaContext.Provider>

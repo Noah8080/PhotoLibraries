@@ -13,7 +13,7 @@ export default function photoAssetPage(){
     let uri;
     let displayIcons = false;
 
-    const {getPhotoByID, uploadPhoto} = useMedia();
+    const {getPhotoByID, uploadPhoto, deletePhoto} = useMedia();
 
     const asset = getPhotoByID(id);
 
@@ -57,9 +57,8 @@ export default function photoAssetPage(){
             <Stack.Screen options={{ title: 'Photo', headerRight: () => 
                 displayIcons ? (
                 <>
-                    <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black" />
-                    {/* add functionality to the delete button */}
-                    <AntDesign onPress={() => uploadPhoto(asset)} name="delete" size={20} color="red" />
+                    <AntDesign onPress={() => deletePhoto(asset)} name="delete" size={20} color="red"/>
+                    <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black"  style={{marginLeft: 20}}  />
                 </> ) : null
 
             }}/>

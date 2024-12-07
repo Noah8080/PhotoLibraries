@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { ScreenContent } from '~/components/ScreenContent';
 import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
-//import { useMedia } from '~/providers/mediaProviders';
 import { AntDesign } from '@expo/vector-icons';
 import { Button, Input } from '@rneui/themed';
 import { NativeModule } from 'expo';
@@ -13,12 +12,10 @@ import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getImagekitUrlFromPath } from '~/utils/imagekit';
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "~/providers/authenticationProvider";
-import { useMedia } from '~/providers/sharedMediaProviders';
-//import MediaContextProvider from '~/providers/sharedMediaProviders';
+
 
 
 export default function Home() {
-
 
   // store current user's data
   const {user} = useAuthentication();

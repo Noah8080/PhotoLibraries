@@ -1,5 +1,5 @@
 import { Stack, Link } from 'expo-router';
-import { StyleSheet, View, FlatList, Text, Pressable, NativeModules} from 'react-native';
+import { StyleSheet, View, FlatList, RefreshControl, Text, Pressable, NativeModules} from 'react-native';
 import { Image } from 'expo-image';
 import { ScreenContent } from '~/components/ScreenContent';
 import * as MediaLibrary from 'expo-media-library';
@@ -20,6 +20,8 @@ export default function Home() {
 
   // set variables for the entered email
   const [email, setEmail] = useState('');
+  // set values for refreshing the page
+  const [refreshing, setRefreshing] = useState(false);
   // store current user's data
   const {user} = useAuthentication();
   if (!user) {
@@ -33,6 +35,16 @@ export default function Home() {
   useEffect(() => {
     getSharedUsers();
   }, []); // TODO: add array of users to the dependency array to get auto updates
+
+  // refresh the page
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      getSharedUsers();
+      setRefreshing(false);
+    }, 2000)
+
+  };
 
   // get the users that the folder has been shared with
   const getSharedUsers = async () => {
@@ -77,8 +89,9 @@ export default function Home() {
     if (validInput && !isRepeat && isAccount) {
       addRecord();
       alert('Folder successfully shared with: ' + email);
-
       setEmail(''); //clears the email input after sharing
+      // refresh the page to show the updated list of shared users
+      onRefresh();
 
     }
 
@@ -180,6 +193,7 @@ export default function Home() {
       if(data){
         alert('Folder successfully unshared with: ' + email);
         console.log('Record deleted from connections table', data, error);
+        onRefresh();
         setEmail(''); //clears the email input after unsharing
       }
     }
