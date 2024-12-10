@@ -1,14 +1,8 @@
 import { Stack, Link } from 'expo-router';
 import { StyleSheet, View, FlatList, Text, Pressable, NativeModules} from 'react-native';
 import { Image } from 'expo-image';
-import { ScreenContent } from '~/components/ScreenContent';
-import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
 import { AntDesign } from '@expo/vector-icons';
-import { Button, Input } from '@rneui/themed';
-import { NativeModule } from 'expo';
-import * as Updates from 'expo-updates';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getImagekitUrlFromPath } from '~/utils/imagekit';
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "~/providers/authenticationProvider";
@@ -33,24 +27,27 @@ export default function Home() {
   // function called on component mount to get the users that the folder has been shared with
   useEffect(() => {
       getSharedList();
-  }, []); // TODO: add array of users to the dependency array to get auto updatess
+  }, []); // NOTE: for future feature add array of users to the dependency array to get auto updatess
 
+  /**
+   * get the list of emails that have shared their folder with the current user
+   * @returns
+   */
   const getSharedList = async () => {
       try{
-
           const {data, error} = await supabase.from('connections').select('*').eq('receiver_email', user.email);
           console.log('Data from connections table', data, error);
 
           // Extract emails from the data and update state
           if (data) {
-              const emails = data.map((user) => user.sender_email); 
-              setReceivedUsersEmails(emails);
-              console.log('recipient of: ', emails);
+            const emails = data.map((user) => user.sender_email); 
+            setReceivedUsersEmails(emails);
+            console.log('recipient of: ', emails);
           }
     
       }
       catch (error) {
-          console.log('Error getting shared users: ', error);
+        console.log('Error getting shared users: ', error);
       }
 
   };
@@ -66,8 +63,6 @@ export default function Home() {
     console.log('you pressed the email:', item);
     // get the user id of the email
     getID(item);
-    // TODO: load media from the bucket with the title of the sender's user ID
-
 
   };
 
@@ -86,6 +81,7 @@ export default function Home() {
         setReceivedIDs(senderID);
         console.log('sender id of: ', senderID);
         setSenderID(senderID[0]);
+        // load photos saved with the currnet senderID
         loadCloudPhotos(senderID[0]);
 
         console.log('sender id2 of: ', senderID[0]);
@@ -101,6 +97,10 @@ export default function Home() {
   // State to store the cloud photos
   const [cloudMedia, setCloudPhotos] = useState<any[]>([]);
 
+  /**
+   * Load photos that were uploaded with the current senderID
+   * @param senderID 
+   */
   const loadCloudPhotos = async (senderID: string) => {
     console.log('loading cloud photos', senderID);
     try{
@@ -152,8 +152,6 @@ export default function Home() {
                   {!item.isInSupa && item.isLocalPhoto &&(
                     <AntDesign name = "cloudupload" size = {18} color = "white" style = {{position: 'absolute', top: 0, right: 5}}/>)
                   }
-
-                
 
                 </Pressable>
               </Link>

@@ -1,16 +1,7 @@
 import { Stack, Link } from 'expo-router';
 import { StyleSheet, View, FlatList, RefreshControl, Text, Pressable, NativeModules} from 'react-native';
-import { Image } from 'expo-image';
-import { ScreenContent } from '~/components/ScreenContent';
-import * as MediaLibrary from 'expo-media-library';
 import { useEffect, useState } from 'react';
-import { useMedia } from '~/providers/mediaProviders';
-import { AntDesign } from '@expo/vector-icons';
 import { Button, Input } from '@rneui/themed';
-import { NativeModule } from 'expo';
-import * as Updates from 'expo-updates';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import { getImagekitUrlFromPath } from '~/utils/imagekit';
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "~/providers/authenticationProvider";
 
@@ -36,15 +27,7 @@ export default function Home() {
     getSharedUsers();
   }, []); // TODO: add array of users to the dependency array to get auto updates
 
-  // refresh the page
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      getSharedUsers();
-      setRefreshing(false);
-    }, 2000)
 
-  };
 
   // get the users that the folder has been shared with
   const getSharedUsers = async () => {
@@ -66,6 +49,7 @@ export default function Home() {
       console.log('Error getting shared users: ', error);
     }
 
+    return sharedUserEmails;
   };
 
   // function called onPress of the share folder button
@@ -87,12 +71,11 @@ export default function Home() {
 
     // if the user's input is valid and the folder has not already been shared with the entered email, add a record to the connections table
     if (validInput && !isRepeat && isAccount) {
-      addRecord();
+      await addRecord();
       alert('Folder successfully shared with: ' + email);
       setEmail(''); //clears the email input after sharing
       // refresh the page to show the updated list of shared users
-      onRefresh();
-
+      await getSharedUsers();
     }
 
 
@@ -169,7 +152,6 @@ export default function Home() {
   };
 
 
-
   // add a record to the connections table in supabase
   const addRecord = async () => {
 
@@ -187,21 +169,37 @@ export default function Home() {
 
   };
 
+  
   const deleteRecord = async () => {
-    try{
-      const {data, error} = await supabase.from('connections').delete().eq('receiver_email', email).eq('user_id', user.id);
-      if(data){
-        alert('Folder successfully unshared with: ' + email);
+
+    // get a list of shared users to make sure the user is deleting an email they are currently conencted to
+    // this is because deleting a record returns a null value and we cannot check if the email was deleted
+    // to handle feedback to the user
+    const sharedUsers = await getSharedUsers();
+    // if the email is in the list of users, call the database to delete the record
+    if(sharedUsers.includes(email)) {
+      try{
+        const {data, error} = await supabase.from('connections').delete().eq('receiver_email', email).eq('user_id', user.id);
         console.log('Record deleted from connections table', data, error);
-        onRefresh();
-        setEmail(''); //clears the email input after unsharing
+        alert('Folder successfully unshared with: ' + email);
+
+      }
+      catch (error) {
+        console.log('Error deleting record from connections table: ', error);
+        alert('Error unsharing folder with: ' + email);
       }
     }
-    catch (error) {
-      console.log('Error deleting record from connections table: ', error);
-      alert('Error unsharing folder with: ' + email);
+    // if it is not, alert the user that the email is not in the list of shared users
+    else {
+      console.log('Email is not in shared users list');
+      alert('You were not sharing a folder with: ' + email); 
     }
+    setEmail(''); //clears the email input after sharing
+    await getSharedUsers(); // refresh the list of shared users
+
   };
+  
+
   
 
   return (

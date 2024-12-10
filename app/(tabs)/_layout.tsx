@@ -7,8 +7,8 @@ export default function TabLayout() {
 
   // get the user's authentication status, 
   //if they are not loged in, they will be redirected to the login/create account page
-  const { user } = useAuthentication();
-  //TODO: can change this to do other things like hiding share or upload feature.
+  const {user} = useAuthentication();
+  //NOTE: can change this to do other things like hiding share or upload feature.
   //      In case you would want use to be able to view photos without being logged in
   //      could also use this for looking at users the folder has been shared with 
   if (!user) {
@@ -20,13 +20,14 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'black', // color of the active tab
+        tabBarActiveTintColor: 'black', // color of the active tab icon
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Tab One',
           tabBarIcon: ({ color }) => <TabBarIcon name="photo" color={color} />,
+          // add a button to the right of the header for account info and signing out
           headerRight: () => (
             <Link href="/modal" asChild>
               <HeaderButton />
@@ -58,8 +59,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-
 
     </Tabs>
   );

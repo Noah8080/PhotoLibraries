@@ -6,8 +6,7 @@ import { decode } from "base64-arraybuffer";
 import { supabase } from "~/utils/supabase";
 import { useAuthentication } from "./authenticationProvider";
 import * as Updates from 'expo-updates';
-import { store } from "expo-router/build/global-state/router-store";
-import photoAssetPage from "~/app/photoAsset";
+
 
 type MediaContextType = {
     assets: MediaLibrary.Asset[];
@@ -30,19 +29,28 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     
   const [permissionResponse, reqestPermission] = MediaLibrary.usePermissions();
   const [localMedia, setLocalMedia] = useState<MediaLibrary.Asset[]>([]);
+
   // create varibles for finding end of page for local media, to be able to load more than one page of media
   const [hasNextPage, setHasNextPage] = useState(true);
   const [endCursor, setEndCursor] = useState<string>();
+
   // make sure method can't be called while it is already loading
   const [loading, setLoading] = useState(false);
+
   // get user's ID from the supabase session to be able to upload photos to their account's bucket
   const {user} = useAuthentication();
 
   // get data of photo's stored in supabase
   const [cloudMedia, setCloudPhotos] = useState<MediaLibrary.Asset[]>([]);
-  // make an array of all media. Filter out the media that is both local and cloud to be loaded with the cloud media
+
+  // make an array of all media. Filter out the media that is both local and cloud, so it is loaded with the cloud media
   const media = [...cloudMedia, ...localMedia.filter((asset) => !asset.isInSupa)];
 
+  /**
+   * load the cloud photos when the user is logged in
+   * @param userID
+   * @returns
+   */
   const userID = user?.id;
   useEffect(() => {
     if(userID){
@@ -50,18 +58,14 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
     }
   }, [userID]);
 
-    // Function to reload the app
-    const reload = async () => {
-      await Updates.reloadAsync(); // This triggers a reload of the app
-    };
 
-
+  /**
+   * get permission from user to access their local media library
+   */
   useEffect(() => {
-    // gets permission from user to access their local media library
     if(permissionResponse?.status != 'granted') {
-        
-        reqestPermission();
 
+      reqestPermission();
     }
   }, []);
 
@@ -73,9 +77,12 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
   }, [permissionResponse]);
 
 
-  // load the photos that are stored in supabase.
+  /**
+   * load the photos that are stored in supabase
+   * @param userID 
+   * @returns
+   */
   const loadCloudPhotos = async (userID: string | undefined) => {
-    console.log('load cloud photos called');
     try{
       const {data, error} = await supabase.from('photoAssets').select('*').eq('user_id', userID);
       if(data) {
@@ -98,16 +105,21 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
    * @returns 
    */
   const loadLocalMedia = async () => {
+    // if the method is already loading or there are no more pages to load, return
     if(loading || !hasNextPage) {
       return;
     }
+
     setLoading(true);
-    //console.log('attempting to loading local media');
     const mediaPage = await MediaLibrary.getAssetsAsync({ after: endCursor }); // get the next page of media
 
-
-    // loop through photo assets table in supabase, checking for photos that are already backed up
-    // results are stored in newMedia
+    /**
+     * create an array of items to be returned
+     * loops through photoAssets table in supabase, checking for photos that are already backed up
+     * results are stored in newMedia
+     * @param asset
+     * @returns
+     */
     const newMedia = await Promise.all(
       mediaPage.assets.map(async (asset) => {
         // query supabase for photo ids that match locally stored photos
@@ -122,127 +134,124 @@ export default function MediaContextProvider({ children }: PropsWithChildren) {
       })
     );
 
-    // display the new media to the log
-    //console.log('========================');
-    //console.log(JSON.stringify(newMedia, null, 2));
-
     // set local media to the assets returned from the media library
     // if there is more than one page of media, this method is called again and will load the next page in front of the exisiting
     setLocalMedia((existingItems) => [...existingItems, ...newMedia]);
     setHasNextPage(mediaPage.hasNextPage);
     setEndCursor(mediaPage.endCursor);
-    
+    // set loading to false to allow the method to be called again
     setLoading(false);
   };
 
-    {/* create function for loading photo in new page */}
-    const getPhotoByID = (id: string) => {
-      // this had to be changed from localMedia to media to include cloud photos
-      let hold = media.find((asset) => asset.id === id);
+  /**
+   * create a function to get a photo by its ID
+   * this function is used to load photos in a new page
+   * @param id 
+   * @returns 
+   */
+  const getPhotoByID = (id: string) => {
+    // this had to be changed from localMedia to media to include cloud photos
+    let hold = media.find((asset) => asset.id === id);
 
-      console.log('getPhotoByID: ', id);
-      console.log('got PhotoByID:', hold);
-      return media.find((asset) => asset.id === id);
+    console.log('getPhotoByID: ', id);
+    console.log('got PhotoByID:', hold);
+    // return the ID of the selected photo
+    return media.find((asset) => asset.id === id);
+  }
+
+  /**
+   * create a function to upload photos to supabase
+   */
+  const uploadPhoto = async (asset: MediaLibrary.Asset) => {
+    // display the current photo's data to the log
+    //console.log('uploading photo: ', asset);
+
+    const photoInfo = await MediaLibrary.getAssetInfoAsync(asset);
+
+    // if the photo is not found or the userID is not found, display a warning
+    if(!photoInfo.localUri || !user?.id) {
+      console.warn('photo not found');
+      return;
     }
 
-    /**
-     * create a function to upload photos to supabase'
-     */
-    const uploadPhoto = async (asset: MediaLibrary.Asset) => {
-      // display the current photo's data to the log
-      //console.log('uploading photo: ', asset);
-
-      const photoInfo = await MediaLibrary.getAssetInfoAsync(asset);
-
-      // if the photo is not found or the userID is not found, display a warning
-      if(!photoInfo.localUri || !user?.id) {
-        console.warn('photo not found');
-        return;
-      }
-
-      // read the photo as a base64 string...
-      const base64String = await FileSystem.readAsStringAsync(photoInfo.localUri, {encoding: 'base64'});
-      // create an array buffer from the base64 string, that will be uploaded to supabase
-      const arrayBuffer = decode(base64String);
-      // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
-      const {data: uploadedImage, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg', upsert: true});
-      console.log('Photo uploaded to bucket: ',uploadedImage, error);
-      alert('Photo uploaded');
+    // read the photo as a base64 string...
+    const base64String = await FileSystem.readAsStringAsync(photoInfo.localUri, {encoding: 'base64'});
+    // create an array buffer from the base64 string, that will be uploaded to supabase
+    const arrayBuffer = decode(base64String);
+    // call supabase storage to upload the photo  (upsert overwrites the photo in the database if one with the same name already exists) 
+    const {data: uploadedImage, error} = await supabase.storage.from('photos').upload(`${user.id}/${asset.filename}`, arrayBuffer, {contentType: 'image/jpeg', upsert: true});
+    console.log('Photo uploaded to bucket: ',uploadedImage, error);
+    alert('Photo uploaded');
 
 
-      // upload photo data to photoAsset table in supabase
-      // this will be used to load images that are in user's table but not their local device
-      if(uploadedImage) {
-        const {data, error} = await supabase.from('photoAssets').upsert({
+    // upload photo data to photoAsset table in supabase
+    // this is used to load images that are in user's table but not their local device
+    if(uploadedImage) {
+      const {data, error} = await supabase.from('photoAssets').upsert({
+        id: asset.id,
+        path: uploadedImage?.path,
+        user_id: user.id,
+        mediaType: asset.mediaType,
+        objectID: uploadedImage?.id,  
 
-          id: asset.id,
-          path: uploadedImage?.path,
-          user_id: user.id,
-          mediaType: asset.mediaType,
-          objectID: uploadedImage?.id,  
-        }).select().single();
-        console.log('Photo assets uploaded to supabase',data, error);
-      }
+      }).select().single();
+      console.log('Photo assets uploaded to supabase',data, error);
+    }
+  }
 
-      // TODO: SECure against potential exe files uploaded as photos
-      // look at magic bytes
+  const deletePhoto = async (asset: MediaLibrary.Asset) => {
 
+    // delete photo from supabase storage
+    if (!user) {
+      console.warn('User not found');
+      return;
     }
 
-    const deletePhoto = async (asset: MediaLibrary.Asset) => {
-
-      // delete photo from supabase storage
-      if (!user) {
-        console.warn('User not found');
-        return;
-      }
-
-      try{
-        // delete photo from photoAssets table in supabase
-        const {data: deletedPhoto, error: deleteError} = await supabase.from('photoAssets').delete().eq('id', asset.id);
-        console.log('Photo assets deleted from supabase', deletedPhoto, deleteError);
+    try{
+      // delete photo from photoAssets table in supabase
+      const {data: deletedPhoto, error: deleteError} = await supabase.from('photoAssets').delete().eq('id', asset.id);
+      console.log('Photo assets deleted from supabase', deletedPhoto, deleteError);
 
 
-        // get the path of the photo to be deleted
-        const extractedData = extractAssetData(asset);
-        // delete photo from supabase storage bucket
-        const {data: deletedImage, error: deleteImageError} = await supabase.storage.from('photos').remove([extractedData.path]);
-        console.log('Photo deleted from bucket', deletedImage, deleteImageError);
+      // get the path of the photo to be deleted
+      const extractedData = extractAssetData(asset);
+      // delete photo from supabase storage bucket
+      const {data: deletedImage, error: deleteImageError} = await supabase.storage.from('photos').remove([extractedData.path]);
+      console.log('Photo deleted from bucket', deletedImage, deleteImageError);
 
-        alert('Photo deleted');
+      alert('Photo deleted');
 
-      }
-      catch (error) {
-        console.log('Error deleting photo: ', error);
-      }
-
-
-    };
-
-    /**
-     * extract the data from the asset to be used in the deletePhoto method 
-     * @param asset
-     * @returns
-     */
-    function extractAssetData(asset: MediaLibrary.Asset) {
-      const {
-        created_at,
-        id,
-        mediaType,
-        objectID,
-        path,
-        user_id,
-      } = asset;
-      return { created_at, id, mediaType, objectID, path, user_id };
     }
-    
+    catch (error) {
+      console.log('Error deleting photo: ', error);
+    }
 
-    return (
-        <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto, deletePhoto}}>
 
-            {children}
-        </MediaContext.Provider>
-    )
+  };
+
+  /**
+   * extract the data from the asset to be used in the deletePhoto method 
+   * @param asset
+   * @returns
+   */
+  function extractAssetData(asset: MediaLibrary.Asset) {
+    const {
+      created_at,
+      id,
+      mediaType,
+      objectID,
+      path,
+      user_id,
+    } = asset;
+    return { created_at, id, mediaType, objectID, path, user_id };
+  }
+
+
+  return (
+      <MediaContext.Provider value={{assets: media, loadLocalMedia, getPhotoByID, uploadPhoto, deletePhoto}}>
+          {children}
+      </MediaContext.Provider>
+  )
 }
 
 

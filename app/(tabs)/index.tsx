@@ -1,15 +1,10 @@
 import { Stack, Link } from 'expo-router';
-import { StyleSheet, View, FlatList, Text, Pressable, NativeModules} from 'react-native';
+import { StyleSheet, View, FlatList, Pressable, Text} from 'react-native';
 import { Image } from 'expo-image';
-import { ScreenContent } from '~/components/ScreenContent';
-import * as MediaLibrary from 'expo-media-library';
-import { useEffect, useState } from 'react';
 import { useMedia } from '~/providers/mediaProviders';
 import { AntDesign } from '@expo/vector-icons';
 import { Button } from '@rneui/themed';
-import { NativeModule } from 'expo';
 import * as Updates from 'expo-updates';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getImagekitUrlFromPath } from '~/utils/imagekit';
 
 export default function Home() {
@@ -37,7 +32,8 @@ export default function Home() {
         renderItem={({item}) => (
           // Link to the photoAsset page
           <Link href={`/photoAsset?id=${item.id}`} asChild>
-            {/* Pressable is used to make the image clickable */}
+            {/* Pressable is used to make the image clickable 
+            width of 33.3% makes 3 columns and aspect ratio of 1 makes images square */ }
             <Pressable style={{width: "33.3%"}}>
               
               <Image source={{uri: item.isLocalPhoto ? item.uri : getImagekitUrlFromPath(item.path, [])}}
@@ -48,10 +44,9 @@ export default function Home() {
               }
 
               
-
             </Pressable>
           </Link>
-          )} // width of 33.3% makes 3 columns and aspect ratio of 1 makes images square
+          )} 
         />
 
     </>

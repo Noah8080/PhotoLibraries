@@ -6,16 +6,11 @@ import { ScreenContent } from '~/components/ScreenContent';
 import { supabase } from '~/utils/supabase';
 import { useEffect, useState } from 'react';
 
-const reload = () => {
-  NativeModules.DevSettings.reload();
-}
-
 export default function Modal() {
 
   const signOutReload = async() => {
     supabase.auth.signOut();
     await Updates.reloadAsync(); // This triggers a reload of the app
-    
   }
   useEffect(() => {getUserEmail();}, []);
 
@@ -42,10 +37,8 @@ export default function Modal() {
   return (
     <>
       <Text style={styles.message}>Signed in with: {email}</Text>
-      {/* <Button onPress={() => supabase.auth.signOut()} */}
       <Button onPress={() => signOutReload()}
        style={styles.btnAct} title='sign out'></Button>
-      {/* <Text style={styles.message}>Close this tag after pressing signout</Text> */}
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </>
   );
