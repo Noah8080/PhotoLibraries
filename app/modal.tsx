@@ -4,10 +4,7 @@ import { Platform, Text, StyleSheet, NativeModules } from 'react-native';
 import * as Updates from 'expo-updates';
 import { ScreenContent } from '~/components/ScreenContent';
 import { supabase } from '~/utils/supabase';
-
-const reload = () => {
-  NativeModules.DevSettings.reload();
-}
+import { useEffect, useState } from 'react';
 
 export default function Modal() {
 
@@ -15,15 +12,33 @@ export default function Modal() {
     supabase.auth.signOut();
     await Updates.reloadAsync(); // This triggers a reload of the app
   }
+  useEffect(() => {getUserEmail();}, []);
+
+  // make state for displaying user's email
+  const [email, setEmail] = useState<string | undefined>(undefined);
+  // get user's email from the supabase session
+  const getUserEmail = async () => {
+    try{
+      const {data: {session}, error} = await supabase.auth.getSession();
+      if(error) {
+        throw error;
+      }
+      if(session) {
+        setEmail(session.user.email);
+      }
+    } 
+    catch (error){
+      console.log("error getting the user's data");
+    }
+    
+  }
+
 
   return (
     <>
-      {/* <Button onPress={() => supabase.auth.signOut()} */}
-      <Button onPress={() => supabase.auth.signOut()}
-
-      
+      <Text style={styles.message}>Signed in with: {email}</Text>
+      <Button onPress={() => signOutReload()}
        style={styles.btnAct} title='sign out'></Button>
-      <Text style={styles.message}>Close this tag after pressing signout</Text>
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </>
   );
@@ -34,7 +49,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: 'blue',
     textAlign: 'center',
-    //display: 'none',
+    margin: 10,
   },
   btnAct:{
     padding: 10,

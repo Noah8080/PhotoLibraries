@@ -10,46 +10,62 @@ import { getImagekitUrlFromPath } from "~/utils/imagekit";
 export default function photoAssetPage(){
 
     const {id} = useLocalSearchParams<{id: string}>();
-    const {getPhotoByID, uploadPhoto} = useMedia();
+    let uri;
+    let displayIcons = false;
+
+    const {getPhotoByID, uploadPhoto, deletePhoto} = useMedia();
 
     const asset = getPhotoByID(id);
 
-
-    // if there is no assets for a photo, display a message
-    if(!asset){
-        return (
-            <Text>Photo not found</Text>
-        )
-    }
-
-    console.log('asset: ' + asset);
-    let uri;
-    // if the asset is not in supabase, display photo using local uri
-    if(asset.isLocalPhoto){
-        uri = asset.uri;
-        console.log('loaded with local uri: ' + uri);
+    // all photo IDS end with 001, so if the id does not end with 001, it is a path
+    if(!id.endsWith("001")){
+        console.log('id/path: ' + id);
+        uri = getImagekitUrlFromPath(id,[]);
+        console.log('loaded with cloud uri: ' + uri);
     }
     else{
-        console.log('loaded with cloud uri: ' + uri);
-        uri = getImagekitUrlFromPath(asset.path,[])
+
+        // if there is no assets for a photo, display a message
+        if(!asset){
+            return (
+                console.log('Photo not found'),
+                <Text>Photo not found</Text>
+            )
+        }
+
+        console.log('asset: ' + asset);
+        // since there is an asset for the photo, this means the owner is...
+        // viewing it. So, display upload and delete icons.
+        displayIcons = true;
+        
+        // if the asset is not in supabase, display photo using local uri
+        if(asset.isLocalPhoto){
+            uri = asset.uri;
+            console.log('loaded with local uri: ' + uri);
+        }
+        else{
+            uri = getImagekitUrlFromPath(asset.path,[])
+            console.log('loaded with cloud uri: ' + uri);
+        }
     }
 
-    // get the image url from the imagekit(currently hard coded for testing), first is path of folder and image, 2nd is array of transformations
-    // (it is currently stored in const uri1 for testing purposes)
-    const uri1 = getImagekitUrlFromPath('6000d788-d96a-4391-baa4-45603463ec23/IMG_0337.HEIC',[])
-
+    
 
     return (
         <>
             {/* add a button at the top corner of each image page */}
             <Stack.Screen options={{ title: 'Photo', headerRight: () => 
-                <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black" /> }} />
+                displayIcons ? (
+                <>
+                    <AntDesign onPress={() => deletePhoto(asset)} name="delete" size={20} color="red"/>
+                    <AntDesign onPress={() => uploadPhoto(asset)} name="cloudupload" size={20} color="black"  style={{marginLeft: 20}}  />
+                </> ) : null
+
+            }}/>
 
             {/* display the image */}
             <Image source={{uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> 
 
-            {/* test purposes to display the image loaded from supabase through imagekit */}
-            {/* <Image source={{uri: uri}} style={{width: '100%', height: '100%'}} contentFit="contain" /> */}
 
         </>
     )
